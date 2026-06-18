@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>LifeOS 2.0 | CEO Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+Bengali:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --bg-primary: #0b0d15;
+            --bg-secondary: #131722;
+            --bg-card: #1a1f2e;
+            --text-primary: #f0f3fa;
+            --text-secondary: #a9b3d1;
+            --text-muted: #6b7a9f;
+            --accent: #8b5cf6;
+            --accent-light: #a78bfa;
+            --accent-glow: rgba(139, 92, 246, 0.25);
+            --green: #34d399;
+            --orange: #fbbf24;
+            --red: #f87171;
+            --border-glass: rgba(255,255,255,0.06);
+            --radius: 16px;
+            --radius-sm: 10px;
+            --transition: 0.25s ease;
+        }
+        body {
+            font-family: 'Inter', 'Noto Sans Bengali', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            display: flex;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 10px; }
+
+        /* Sidebar */
+        .sidebar {
+            width: 270px;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border-glass);
+            padding: 20px 14px;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            position: sticky;
+            top: 0;
+            overflow-y: auto;
+            flex-shrink: 0;
+            transition: transform 0.3s ease;
+            z-index: 100;
+        }
+        .sidebar-brand { display: flex; align-items: center; gap: 12px; padding-bottom: 28px; border-bottom: 1px solid var(--border-glass); margin-bottom: 20px; }
+        .sidebar-brand i { font-size: 28px; color: var(--accent); background: var(--accent-glow); padding: 10px; border-radius: 12px; }
+        .sidebar-brand h1 { font-size: 22px; font-weight: 800; background: linear-gradient(135deg, #fff, var(--accent-light)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .sidebar-brand span { font-size: 11px; color: var(--text-muted); -webkit-text-fill-color: var(--text-muted); }
+
+        .nav-items { display: flex; flex-direction: column; gap: 4px; flex: 1; }
+        .nav-item {
+            display: flex; align-items: center; gap: 14px; padding: 12px 16px;
+            border-radius: var(--radius-sm); color: var(--text-secondary); font-weight: 500;
+            font-size: 14px; cursor: pointer; transition: var(--transition);
+            border: none; background: transparent; width: 100%; text-align: left;
+        }
+        .nav-item i { width: 22px; font-size: 16px; }
+        .nav-item:hover { background: var(--bg-card); color: #fff; }
+        .nav-item.active { background: var(--accent); color: #fff; box-shadow: 0 4px 14px var(--accent-glow); }
+
+        /* Main */
+        .main-content { flex: 1; padding: 24px 30px 60px; max-height: 100vh; overflow-y: auto; }
+        .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 28px; flex-wrap: wrap; gap: 12px; }
+        .page-header h2 { font-size: 26px; font-weight: 700; }
+        .date-badge { background: var(--bg-card); padding: 8px 18px; border-radius: 30px; font-size: 13px; color: var(--text-secondary); border: 1px solid var(--border-glass); }
+
+        /* Grids */
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+        .grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 16px; }
+        .card { background: var(--bg-card); border-radius: var(--radius); padding: 20px; border: 1px solid var(--border-glass); transition: var(--transition); }
+        .card:hover { border-color: var(--accent-glow); }
+        .card-title { font-size: 15px; font-weight: 600; color: var(--text-secondary); margin-bottom: 14px; display: flex; align-items: center; gap: 10px; }
+        .card-title i { color: var(--accent); }
+
+        /* Components */
+        .prayer-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+        .prayer-item {
+            background: var(--bg-secondary); border-radius: var(--radius-sm); padding: 12px 4px;
+            text-align: center; cursor: pointer; border: 2px solid transparent; transition: var(--transition);
+        }
+        .prayer-item.checked { border-color: var(--green); background: rgba(52,211,153,0.12); }
+        .prayer-item .prayer-name { font-size: 12px; font-weight: 600; display: block; }
+        .prayer-item .prayer-icon { font-size: 18px; display: block; }
+
+        .habit-row {
+            display: flex; align-items: center; justify-content: space-between;
+            background: var(--bg-secondary); padding: 10px 14px; border-radius: var(--radius-sm); margin-bottom: 6px;
+        }
+        .habit-toggle {
+            width: 44px; height: 24px; background: var(--text-muted); border-radius: 30px;
+            cursor: pointer; position: relative; transition: var(--transition);
+        }
+        .habit-toggle.active { background: var(--green); }
+        .habit-toggle::after {
+            content: ''; position: absolute; width: 18px; height: 18px; background: #fff;
+            border-radius: 50%; top: 3px; left: 3px; transition: var(--transition);
+        }
+        .habit-toggle.active::after { left: 22px; }
+
+        .task-card, .client-card, .goal-card {
+            background: var(--bg-secondary); padding: 12px 16px; border-radius: var(--radius-sm);
+            margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;
+            border-left: 3px solid var(--accent);
+        }
+        .task-card.done, .goal-card.done { opacity: 0.5; border-left-color: var(--green); text-decoration: line-through; }
+        .task-actions button, .goal-actions button { background: none; border: none; color: var(--text-muted); cursor: pointer; margin-left: 6px; font-size: 14px; }
+        .task-actions button:hover { color: #fff; }
+
+        .input-group {
+            display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap;
+        }
+        .input-group input, .input-group select, .input-group textarea {
+            flex: 1; min-width: 120px; padding: 10px 14px; border-radius: var(--radius-sm);
+            border: 1px solid var(--border-glass); background: var(--bg-secondary);
+            color: #fff; font-size: 14px; outline: none;
+        }
+        .input-group input:focus { border-color: var(--accent); }
+        .btn {
+            padding: 10px 20px; border-radius: var(--radius-sm); border: none;
+            font-weight: 600; cursor: pointer; transition: var(--transition);
+            background: var(--accent); color: #fff; font-size: 14px;
+        }
+        .btn:hover { opacity: 0.85; transform: scale(0.97); }
+        .btn-sm { padding: 6px 14px; font-size: 12px; }
+
+        .stat-box { background: var(--bg-secondary); padding: 12px 16px; border-radius: var(--radius-sm); flex: 1; min-width: 90px; }
+        .stat-box .label { font-size: 12px; color: var(--text-muted); }
+        .stat-box .value { font-size: 20px; font-weight: 700; }
+        .green { color: var(--green); } .red { color: var(--red); } .orange { color: var(--orange); }
+
+        .mood-selector { display: flex; gap: 12px; font-size: 28px; cursor: pointer; }
+        .mood-selector span { opacity: 0.4; transition: var(--transition); }
+        .mood-selector span.active { opacity: 1; transform: scale(1.2); }
+
+        .page { display: none; animation: fadeIn 0.25s ease; }
+        .page.active { display: block; }
+        @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+
+        .empty-state { color: var(--text-muted); text-align: center; padding: 20px 0; font-size: 14px; }
+
+        /* Mobile */
+        .hamburger { display: none; background: none; border: none; color: #fff; font-size: 24px; cursor: pointer; }
+        .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 90; }
+        .overlay.active { display: block; }
+
+        @media (max-width: 1024px) { .grid-4 { grid-template-columns: 1fr 1fr; } }
+        @media (max-width: 768px) {
+            .sidebar { transform: translateX(-100%); width: 280px; position: fixed; }
+            .sidebar.open { transform: translateX(0); }
+            .main-content { padding: 16px; }
+            .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+            .prayer-grid { grid-template-columns: repeat(3, 1fr); }
+            .hamburger { display: block !important; }
+            .page-header h2 { font-size: 20px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="overlay" id="overlay"></div>
+
+<!-- Sidebar -->
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+        <i class="fas fa-crown"></i>
+        <div><h1>LifeOS</h1><span>CEO v2.0</span></div>
+    </div>
+    <div class="nav-items">
+        <button class="nav-item active" data-page="dashboard"><i class="fas fa-th-large"></i> ড্যাশবোর্ড</button>
+        <button class="nav-item" data-page="prayers"><i class="fas fa-mosque"></i> নামাজ</button>
+        <button class="nav-item" data-page="habits"><i class="fas fa-check-double"></i> অভ্যাস</button>
+        <button class="nav-item" data-page="goals"><i class="fas fa-flag"></i> সাপ্তাহিক লক্ষ্য</button>
+        <button class="nav-item" data-page="tasks"><i class="fas fa-tasks"></i> প্রজেক্টস</button>
+        <button class="nav-item" data-page="clients"><i class="fas fa-user-tie"></i> ক্লায়েন্ট</button>
+        <button class="nav-item" data-page="journal"><i class="fas fa-book"></i> জার্নাল</button>
+        <button class="nav-item" data-page="finance"><i class="fas fa-wallet"></i> ফাইন্যান্স</button>
+        <button class="nav-item" data-page="notes"><i class="fas fa-brain"></i> নোট</button>
+        <button class="nav-item" data-page="settings"><i class="fas fa-sliders-h"></i> সেটিংস</button>
+    </div>
+</nav>
+
+<!-- Main -->
+<main class="main-content">
+    <div class="page-header">
+        <div style="display:flex;align-items:center;gap:14px;">
+            <button class="hamburger" id="hamburger"><i class="fas fa-bars"></i></button>
+            <h2 id="pageTitle">ড্যাশবোর্ড</h2>
+        </div>
+        <div class="date-badge" id="currentDate"></div>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div class="page active" id="page-dashboard">
+        <div class="grid-3" style="margin-bottom:20px;">
+            <div class="card"><div class="card-title"><i class="fas fa-pray"></i> নামাজ</div><div id="dashPrayer">0/5</div></div>
+            <div class="card"><div class="card-title"><i class="fas fa-flag"></i> সাপ্তাহিক লক্ষ্য</div><div id="dashGoalProgress">0%</div></div>
+            <div class="card"><div class="card-title"><i class="fas fa-smile"></i> আজকের মুড</div><div id="dashMood">😐</div></div>
+        </div>
+        <div class="grid-2">
+            <div class="card"><div class="card-title"><i class="fas fa-clock"></i> সাম্প্রতিক টাস্ক</div><div id="dashTasks">Loading...</div></div>
+            <div class="card"><div class="card-title"><i class="fas fa-users"></i> ক্লায়েন্ট</div><div id="dashClients">Loading...</div></div>
+        </div>
+    </div>
+
+    <!-- PRAYERS -->
+    <div class="page" id="page-prayers">
+        <div class="card">
+            <div class="card-title"><i class="fas fa-mosque"></i> ৫ ওয়াক্ত নামাজ</div>
+            <div class="prayer-grid" id="prayerGrid"></div>
+            <div style="margin-top:14px;text-align:center;color:var(--text-secondary);">অগ্রগতি: <span id="prayerProgress">0%</span></div>
+        </div>
+    </div>
+
+    <!-- HABITS -->
+    <div class="page" id="page-habits">
+        <div class="card">
+            <div class="card-title"><i class="fas fa-check-double"></i> ডেইলি হাবিটস (ন্যূনতম মান)</div>
+            <div class="habit-list" id="habitList"></div>
+        </div>
+    </div>
+
+    <!-- WEEKLY GOALS -->
+    <div class="page" id="page-goals">
+        <div class="card">
+            <div class="card-title"><i class="fas fa-plus-circle"></i> এই সপ্তাহের লক্ষ্য যোগ</div>
+            <div class="input-group">
+                <input type="text" id="goalInput" placeholder="যেমন: Agency Website শেষ">
+                <button class="btn" id="addGoalBtn"><i class="fas fa-plus"></i> যোগ</button>
+            </div>
+        </div>
+        <div class="card" style="margin-top:16px;"><div class="card-title"><i class="fas fa-list"></i> সাপ্তাহিক টার্গেট</div><div id="goalList"></div></div>
+    </div>
+
+    <!-- TASKS -->
+    <div class="page" id="page-tasks">
+        <div class="card">
+            <div class="card-title"><i class="fas fa-plus-circle"></i> নতুন টাস্ক</div>
+            <div class="input-group">
+                <input type="text" id="taskInput" placeholder="যেমন: Logo Design">
+                <select id="taskCategory"><option value="Agency">Agency</option><option value="Spice">Spice</option><option value="University">University</option><option value="Personal">Personal</option></select>
+                <button class="btn" id="addTaskBtn"><i class="fas fa-plus"></i> যোগ</button>
+            </div>
+        </div>
+        <div class="card" style="margin-top:16px;"><div class="card-title"><i class="fas fa-list"></i> সব প্রজেক্ট</div><div id="taskListContainer"></div></div>
+    </div>
+
+    <!-- CLIENTS -->
+    <div class="page" id="page-clients">
+        <div class="card">
+            <div class="card-title"><i class="fas fa-user-plus"></i> নতুন ক্লায়েন্ট যোগ</div>
+            <div class="input-group">
+                <input type="text" id="clientName" placeholder="নাম">
+                <input type="text" id="clientProject" placeholder="প্রজেক্ট">
+                <select id="clientStatus"><option value="Active">Active</option><option value="Completed">Completed</option><option value="Lead">Lead</option></select>
+                <button class="btn" id="addClientBtn"><i class="fas fa-plus"></i> যোগ</button>
+            </div>
+        </div>
+        <div class="card" style="margin-top:16px;"><div class="card-title"><i class="fas fa-users"></i> ক্লায়েন্ট লিস্ট</div><div id="clientList"></div></div>
+    </div>
+
+    <!-- JOURNAL -->
+    <div class="page" id="page-journal">
+        <div class="card">
+            <div class="card-title"><i class="fas fa-pen"></i> আজকের জার্নাল</div>
+            <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:12px;">
+                <span style="color:var(--text-secondary);">মুড:</span>
+                <div class="mood-selector" id="moodSelector">
+                    <span data-mood="😊">😊</span>
+                    <span data-mood="😐">😐</span>
+                    <span data-mood="😔">😔</span>
+                    <span data-mood="🤯">🤯</span>
+                </div>
+            </div>
+            <textarea id="journalText" style="width:100%;padding:12px;border-radius:var(--radius-sm);background:var(--bg-secondary);border:1px solid var(--border-glass);color:#fff;min-height:100px;" placeholder="আজকের দিন কেমন গেল? কী শিখলেন?"></textarea>
+            <button class="btn" id="saveJournalBtn" style="margin-top:10px;"><i class="fas fa-save"></i> সংরক্ষণ</button>
+        </div>
+        <div class="card" style="margin-top:16px;"><div class="card-title"><i class="fas fa-history"></i> পুরোনো এন্ট্রি</div><div id="journalList"></div></div>
+    </div>
+
+    <!-- FINANCE -->
+    <div class="page" id="page-finance">
+        <div class="card">
+            <div class="card-title"><i class="fas fa-plus-circle"></i> লেনদেন</div>
+            <div class="input-group">
+                <input type="text" id="financeDesc" placeholder="বিবরণ">
+                <input type="number" id="financeAmount" placeholder="টাকা">
+                <select id="financeType"><option value="income">আয়</option><option value="expense">ব্যয়</option></select>
+                <select id="financeCategory"><option value="Agency">Agency</option><option value="Spice">Spice</option><option value="Personal">Personal</option></select>
+                <button class="btn" id="addFinanceBtn"><i class="fas fa-plus"></i> যোগ</button>
+            </div>
+        </div>
+        <div class="grid-2" style="margin-top:16px;">
+            <div class="card"><div class="card-title"><i class="fas fa-chart-pie"></i> সামারি</div><div id="financeSummary"></div></div>
+            <div class="card"><div class="card-title"><i class="fas fa-history"></i> হিস্টোরি</div><div id="financeHistory"></div></div>
+        </div>
+    </div>
+
+    <!-- NOTES -->
+    <div class="page" id="page-notes">
+        <div class="card">
+            <div class="card-title"><i class="fas fa-pen-fancy"></i> নতুন নোট</div>
+            <div class="input-group">
+                <input type="text" id="noteTitle" placeholder="শিরোনাম">
+                <input type="text" id="noteTag" placeholder="ট্যাগ (আইডিয়া)">
+                <button class="btn" id="addNoteBtn"><i class="fas fa-plus"></i> সংরক্ষণ</button>
+            </div>
+            <textarea id="noteContent" style="width:100%;margin-top:10px;padding:12px;border-radius:var(--radius-sm);background:var(--bg-secondary);border:1px solid var(--border-glass);color:#fff;min-height:80px;" placeholder="আপনার আইডিয়া..."></textarea>
+        </div>
+        <div class="card" style="margin-top:16px;"><div class="card-title"><i class="fas fa-box"></i> সব নোট</div><div id="noteList"></div></div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div class="page" id="page-settings">
+        <div class="card">
+            <div class="card-title"><i class="fas fa-info-circle"></i> সিস্টেম কনফিগারেশন</div>
+            <p style="color:var(--text-secondary);line-height:1.8;">✅ ডেটা লোকাল ব্রাউজারে সংরক্ষিত।<br>
+            📱 মোবাইলে "Add to Home Screen" বলে App-এর মতো ব্যবহার করুন।<br>
+            🌐 লাইভ করতে Netlify বা GitHub Pages ব্যবহার করুন।<br>
+            <i class="fas fa-database" style="color:var(--accent);"></i> সব ডেটা নিরাপদে আছে।</p>
+            <button class="btn" id="resetDataBtn" style="background:var(--red);margin-top:16px;"><i class="fas fa-trash"></i> সব ডেটা রিসেট</button>
+        </div>
+    </div>
+</main>
+
+<script>
+    // ============================================================
+    //  LIFEOS 2.0 - CORE ENGINE
+    // ============================================================
+
+    const DEFAULT_DATA = {
+        prayers: { fajr: false, dhuhr: false, asr: false, maghrib: false, isha: false },
+        habits: { gym: false, english: false, law: false, business: false, family: false },
+        tasks: [],
+        finances: [],
+        notes: [],
+        weeklyGoals: [],
+        clients: [],
+        journal: [],
+        streak: { count: 0, lastDate: null }
+    };
+
+    let appData = { ...DEFAULT_DATA };
+
+    function getToday() { return new Date().toISOString().split('T')[0]; }
+    function getWeekStart() {
+        const d = new Date();
+        const day = d.getDay();
+        const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+        return new Date(d.setDate(diff)).toISOString().split('T')[0];
+    }
+
+    function loadData() {
+        const stored = localStorage.getItem('lifeos_data');
+        if (stored) {
+            try {
+                appData = JSON.parse(stored);
+                for (let k in DEFAULT_DATA) if (!(k in appData)) appData[k] = DEFAULT_DATA[k];
+                if (!appData.prayers) appData.prayers = { ...DEFAULT_DATA.prayers };
+                if (!appData.habits) appData.habits = { ...DEFAULT_DATA.habits };
+                if (!appData.weeklyGoals) appData.weeklyGoals = [];
+                if (!appData.clients) appData.clients = [];
+                if (!appData.journal) appData.journal = [];
+            } catch(e) { appData = { ...DEFAULT_DATA }; }
+        } else { appData = { ...DEFAULT_DATA }; }
+        saveData();
+    }
+    function saveData() { localStorage.setItem('lifeos_data', JSON.stringify(appData)); }
+
+    // ----- Navigation -----
+    const pages = document.querySelectorAll('.page');
+    const navItems = document.querySelectorAll('.nav-item');
+    const pageTitle = document.getElementById('pageTitle');
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('overlay');
+    const hamburger = document.getElementById('hamburger');
+
+    function closeSidebar() { sidebar.classList.remove('open'); overlay.classList.remove('active'); }
+
+    navItems.forEach(item => {
+        item.addEventListener('click', () => {
+            const pageId = item.dataset.page;
+            navItems.forEach(n => n.classList.remove('active'));
+            item.classList.add('active');
+            pages.forEach(p => p.classList.remove('active'));
+            const target = document.getElementById(`page-${pageId}`);
+            if (target) target.classList.add('active');
+            const titles = {
+                dashboard:'📊 ড্যাশবোর্ড', prayers:'🕌 নামাজ', habits:'✅ অভ্যাস',
+                goals:'🎯 সাপ্তাহিক লক্ষ্য', tasks:'📋 প্রজেক্টস', clients:'🤝 ক্লায়েন্ট',
+                journal:'📖 জার্নাল', finance:'💰 ফাইন্যান্স', notes:'🧠 নোট', settings:'⚙️ সেটিংস'
+            };
+            pageTitle.textContent = titles[pageId] || pageId;
+            closeSidebar();
+            renderAll();
+        });
+    });
+    hamburger.addEventListener('click', () => { sidebar.classList.toggle('open'); overlay.classList.toggle('active'); });
+    overlay.addEventListener('click', closeSidebar);
+
+    // ----- Render Engine -----
+    function renderAll() {
+        renderPrayers(); renderHabits(); renderGoals(); renderTasks(); renderClients(); renderJournal();
+        renderFinance(); renderNotes(); renderDashboard();
+    }
+
+    // 1. DASHBOARD
+    function renderDashboard() {
+        const totalPray = Object.values(appData.prayers).filter(v=>v).length;
+        document.getElementById('dashPrayer').innerHTML = `${totalPray}/5`;
+        
+        const weekStart = getWeekStart();
+        const weekGoals = appData.weeklyGoals.filter(g => g.weekStart === weekStart);
+        const done = weekGoals.filter(g => g.done).length;
+        const total = weekGoals.length;
+        document.getElementById('dashGoalProgress').innerHTML = total ? `${Math.round((done/total)*100)}% (${done}/${total})` : 'লক্ষ্য নেই';
+
+        // Mood
+        const todayJournal = appData.journal.find(j => j.date === getToday());
+        document.getElementById('dashMood').innerHTML = todayJournal ? todayJournal.mood : '😐';
+
+        // Tasks
+        const recent = appData.tasks.slice(-3).reverse();
+        document.getElementById('dashTasks').innerHTML = recent.length ? recent.map(t => 
+            `<div class="task-card ${t.done?'done':''}" style="padding:8px 12px;font-size:13px;"><span>${t.text}</span><span style="font-size:10px;color:var(--text-muted)">${t.category}</span></div>`
+        ).join('') : '<div class="empty-state">কোন টাস্ক নেই</div>';
+
+        // Clients
+        const activeClients = appData.clients.filter(c => c.status === 'Active');
+        document.getElementById('dashClients').innerHTML = 
+            `<div style="display:flex;gap:16px;flex-wrap:wrap;"><div class="stat-box"><div class="label">সক্রিয়</div><div class="value green">${activeClients.length}</div></div>
+            <div class="stat-box"><div class="label">মোট</div><div class="value">${appData.clients.length}</div></div></div>`;
+    }
+
+    // 2. PRAYERS
+    function renderPrayers() {
+        const grid = document.getElementById('prayerGrid');
+        const names = [
+            { key:'fajr', label:'ফজর', icon:'🌅' }, { key:'dhuhr', label:'যোহর', icon:'☀️' },
+            { key:'asr', label:'আসর', icon:'🌤️' }, { key:'maghrib', label:'মাগরিব', icon:'🌇' },
+            { key:'isha', label:'এশা', icon:'🌙' }
+        ];
+        grid.innerHTML = names.map(n => {
+            const checked = appData.prayers[n.key] || false;
+            return `<div class="prayer-item ${checked?'checked':''}" data-key="${n.key}">
+                <span class="prayer-icon">${n.icon}</span>
+                <span class="prayer-name">${n.label}</span>
+                <span style="font-size:10px;">${checked?'✅':'⬜'}</span>
+            </div>`;
+        }).join('');
+        grid.querySelectorAll('.prayer-item').forEach(el => {
+            el.addEventListener('click', () => {
+                const key = el.dataset.key;
+                appData.prayers[key] = !appData.prayers[key];
+                saveData(); renderPrayers(); renderDashboard();
+            });
+        });
+        const total = Object.values(appData.prayers).filter(v=>v).length;
+        document.getElementById('prayerProgress').textContent = `${Math.round((total/5)*100)}%`;
+    }
+
+    // 3. HABITS
+    function renderHabits() {
+        const list = document.getElementById('habitList');
+        const map = { gym:'🏋️ Gym/Walk', english:'📚 English 20m', law:'⚖️ Law 30m', business:'💼 Business 1 Task', family:'👨‍👩‍👧‍👦 Family' };
+        list.innerHTML = Object.keys(map).map(key => {
+            const checked = appData.habits[key] || false;
+            return `<div class="habit-row"><span style="display:flex;align-items:center;gap:10px;font-size:14px;">${map[key]}</span>
+                <div class="habit-toggle ${checked?'active':''}" data-key="${key}"></div></div>`;
+        }).join('');
+        list.querySelectorAll('.habit-toggle').forEach(el => {
+            el.addEventListener('click', () => {
+                const key = el.dataset.key;
+                appData.habits[key] = !appData.habits[key];
+                saveData(); renderHabits(); renderDashboard();
+            });
+        });
+    }
+
+    // 4. WEEKLY GOALS
+    function renderGoals() {
+        const container = document.getElementById('goalList');
+        const weekStart = getWeekStart();
+        const goals = appData.weeklyGoals.filter(g => g.weekStart === weekStart);
+        if (!goals.length) { container.innerHTML = '<div class="empty-state">এই সপ্তাহের কোনো লক্ষ্য নেই</div>'; return; }
+        container.innerHTML = goals.map((g, idx) => {
+            const realIdx = appData.weeklyGoals.indexOf(g);
+            return `<div class="goal-card ${g.done?'done':''}">
+                <span>${g.text}</span>
+                <div class="goal-actions">
+                    <button onclick="toggleGoal(${realIdx})"><i class="fas ${g.done?'fa-undo':'fa-check'}"></i></button>
+                    <button onclick="deleteGoal(${realIdx})"><i class="fas fa-trash"></i></button>
+                </div>
+            </div>`;
+        }).join('');
+    }
+    window.toggleGoal = (idx) => { appData.weeklyGoals[idx].done = !appData.weeklyGoals[idx].done; saveData(); renderGoals(); renderDashboard(); };
+    window.deleteGoal = (idx) => { appData.weeklyGoals.splice(idx,1); saveData(); renderGoals(); renderDashboard(); };
+    document.getElementById('addGoalBtn').addEventListener('click', () => {
+        const input = document.getElementById('goalInput');
+        if (!input.value.trim()) return;
+        appData.weeklyGoals.push({ text: input.value.trim(), done: false, weekStart: getWeekStart() });
+        input.value = ''; saveData(); renderGoals(); renderDashboard();
+    });
+
+    // 5. TASKS
+    function renderTasks() {
+        const container = document.getElementById('taskListContainer');
+        if (!appData.tasks.length) { container.innerHTML = '<div class="empty-state">📭 কোনো টাস্ক নেই</div>'; return; }
+        const cats = ['Agency','Spice','University','Personal'];
+        let html = '';
+        cats.forEach(cat => {
+            const f = appData.tasks.filter(t => t.category === cat);
+            if (!f.length) return;
+            html += `<div style="margin-bottom:10px;"><strong style="color:var(--accent-light);">${cat}</strong>`;
+            f.forEach((t) => {
+                const idx = appData.tasks.indexOf(t);
+                html += `<div class="task-card ${t.done?'done':''}"><span>${t.text}</span>
+                    <div class="task-actions">
+                        <button onclick="toggleTask(${idx})"><i class="fas ${t.done?'fa-undo':'fa-check'}"></i></button>
+                        <button onclick="deleteTask(${idx})"><i class="fas fa-trash"></i></button>
+                    </div></div>`;
+            });
+            html += `</div>`;
+        });
+        container.innerHTML = html;
+    }
+    window.toggleTask = (idx) => { appData.tasks[idx].done = !appData.tasks[idx].done; saveData(); renderTasks(); renderDashboard(); };
+    window.deleteTask = (idx) => { appData.tasks.splice(idx,1); saveData(); renderTasks(); renderDashboard(); };
+    document.getElementById('addTaskBtn').addEventListener('click', () => {
+        const input = document.getElementById('taskInput');
+        const cat = document.getElementById('taskCategory').value;
+        if (!input.value.trim()) return;
+        appData.tasks.push({ text: input.value.trim(), category: cat, done: false, date: getToday() });
+        input.value = ''; saveData(); renderTasks(); renderDashboard();
+    });
+
+    // 6. CLIENTS
+    function renderClients() {
+        const container = document.getElementById('clientList');
+        if (!appData.clients.length) { container.innerHTML = '<div class="empty-state">🤝 কোনো ক্লায়েন্ট যোগ করেননি</div>'; return; }
+        container.innerHTML = appData.clients.slice().reverse().map((c, idx) => {
+            const realIdx = appData.clients.length - 1 - idx;
+            return `<div class="client-card" style="border-left-color:${c.status==='Active'?'var(--green)':'var(--text-muted)'};">
+                <div><strong>${c.name}</strong> <span style="font-size:13px;color:var(--text-secondary);">${c.project}</span></div>
+                <div><span style="font-size:11px;background:${c.status==='Active'?'rgba(52,211,153,0.2)':'rgba(255,255,255,0.1)'};padding:2px 10px;border-radius:20px;">${c.status}</span>
+                <button onclick="deleteClient(${realIdx})" style="background:none;border:none;color:var(--red);margin-left:8px;cursor:pointer;"><i class="fas fa-times"></i></button></div>
+            </div>`;
+        }).join('');
+    }
+    window.deleteClient = (idx) => { appData.clients.splice(idx,1); saveData(); renderClients(); renderDashboard(); };
+    document.getElementById('addClientBtn').addEventListener('click', () => {
+        const name = document.getElementById('clientName');
+        const project = document.getElementById('clientProject');
+        const status = document.getElementById('clientStatus').value;
+        if (!name.value.trim() || !project.value.trim()) return;
+        appData.clients.push({ name: name.value.trim(), project: project.value.trim(), status });
+        name.value = ''; project.value = ''; saveData(); renderClients(); renderDashboard();
+    });
+
+    // 7. JOURNAL
+    function renderJournal() {
+        const container = document.getElementById('journalList');
+        const entries = appData.journal.slice().reverse().slice(0, 7);
+        if (!entries.length) { container.innerHTML = '<div class="empty-state">কোনো জার্নাল এন্ট্রি নেই</div>'; return; }
+        container.innerHTML = entries.map(j => 
+            `<div style="background:var(--bg-secondary);padding:12px;border-radius:var(--radius-sm);margin-bottom:8px;border-left:3px solid var(--orange);">
+                <div style="display:flex;justify-content:space-between;"><strong>${j.date}</strong> <span style="font-size:22px;">${j.mood}</span></div>
+                <p style="color:var(--text-secondary);font-size:14px;margin-top:4px;">${j.text || '...'}</p>
+            </div>`
+        ).join('');
+    }
+    document.getElementById('saveJournalBtn').addEventListener('click', () => {
+        const text = document.getElementById('journalText');
+        const activeMood = document.querySelector('.mood-selector span.active');
+        const mood = activeMood ? activeMood.dataset.mood : '😐';
+        if (!text.value.trim()) return;
+        const existing = appData.journal.findIndex(j => j.date === getToday());
+        if (existing > -1) appData.journal[existing] = { date: getToday(), mood, text: text.value.trim() };
+        else appData.journal.push({ date: getToday(), mood, text: text.value.trim() });
+        text.value = ''; saveData(); renderJournal(); renderDashboard();
+    });
+    // Mood selector
+    document.querySelectorAll('.mood-selector span').forEach(el => {
+        el.addEventListener('click', () => {
+            document.querySelectorAll('.mood-selector span').forEach(s => s.classList.remove('active'));
+            el.classList.add('active');
+        });
+    });
+    // Preload today's journal for editing
+    function loadTodayJournal() {
+        const today = appData.journal.find(j => j.date === getToday());
+        if (today) {
+            document.getElementById('journalText').value = today.text;
+            document.querySelectorAll('.mood-selector span').forEach(s => {
+                s.classList.toggle('active', s.dataset.mood === today.mood);
+            });
+        }
+    }
+
+    // 8. FINANCE (same as before, improved)
+    function renderFinance() {
+        const summary = document.getElementById('financeSummary');
+        const history = document.getElementById('financeHistory');
+        const totalIncome = appData.finances.filter(f=>f.type==='income').reduce((a,b)=>a+Number(b.amount),0);
+        const totalExpense = appData.finances.filter(f=>f.type==='expense').reduce((a,b)=>a+Number(b.amount),0);
+        summary.innerHTML = `
+            <div class="finance-summary" style="display:flex;gap:12px;flex-wrap:wrap;">
+                <div class="stat-box"><div class="label">আয়</div><div class="value green">${totalIncome} ৳</div></div>
+                <div class="stat-box"><div class="label">ব্যয়</div><div class="value red">${totalExpense} ৳</div></div>
+                <div class="stat-box"><div class="label">সঞ্চয়</div><div class="value" style="color:var(--accent)">${totalIncome-totalExpense} ৳</div></div>
+            </div>
+        `;
+        if (!appData.finances.length) { history.innerHTML = '<div class="empty-state">কোন লেনদেন নেই</div>'; return; }
+        history.innerHTML = appData.finances.slice().reverse().slice(0,10).map(f =>
+            `<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border-glass);font-size:14px;">
+                <span>${f.desc}</span>
+                <span style="color:${f.type==='income'?'var(--green)':'var(--red)'}">${f.type==='income'?'+':'-'} ${f.amount} ৳</span>
+                <span style="font-size:11px;color:var(--text-muted)">${f.category}</span>
+            </div>`
+        ).join('');
+    }
+    document.getElementById('addFinanceBtn').addEventListener('click', () => {
+        const desc = document.getElementById('financeDesc');
+        const amount = document.getElementById('financeAmount');
+        const type = document.getElementById('financeType').value;
+        const cat = document.getElementById('financeCategory').value;
+        if (!desc.value.trim() || !amount.value) return;
+        appData.finances.push({ desc: desc.value.trim(), amount: parseFloat(amount.value), type, category: cat, date: getToday() });
+        desc.value = ''; amount.value = ''; saveData(); renderFinance(); renderDashboard();
+    });
+
+    // 9. NOTES
+    function renderNotes() {
+        const container = document.getElementById('noteList');
+        if (!appData.notes.length) { container.innerHTML = '<div class="empty-state">🧠 কোনো নোট নেই</div>'; return; }
+        container.innerHTML = appData.notes.slice().reverse().map(n =>
+            `<div class="note-item" style="background:var(--bg-secondary);padding:12px;border-radius:var(--radius-sm);margin-bottom:6px;border-left:3px solid var(--orange);">
+                <div style="font-weight:600;">${n.title}</div>
+                <div style="font-size:13px;color:var(--text-secondary);">${n.content}</div>
+                <div style="margin-top:4px;"><span style="font-size:11px;color:var(--accent-light);background:var(--accent-glow);padding:2px 10px;border-radius:20px;">#${n.tag||'general'}</span></div>
+            </div>`
+        ).join('');
+    }
+    document.getElementById('addNoteBtn').addEventListener('click', () => {
+        const title = document.getElementById('noteTitle');
+        const content = document.getElementById('noteContent');
+        const tag = document.getElementById('noteTag');
+        if (!title.value.trim() || !content.value.trim()) return;
+        appData.notes.push({ title: title.value.trim(), content: content.value.trim(), tag: tag.value.trim()||'general', date: getToday() });
+        title.value = ''; content.value = ''; tag.value = ''; saveData(); renderNotes();
+    });
+
+    // 10. RESET
+    document.getElementById('resetDataBtn').addEventListener('click', () => {
+        if (confirm('সমস্ত ডেটা মুছে ফেলতে চান?')) {
+            appData = { ...DEFAULT_DATA }; saveData(); renderAll();
+        }
+    });
+
+    // ----- INIT -----
+    document.getElementById('currentDate').textContent = new Date().toLocaleDateString('bn-BD', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+    loadData();
+    renderAll();
+    loadTodayJournal(); // Load today's journal if exists
+    document.querySelector('.nav-item.active')?.click();
+</script>
+</body>
+</html>
