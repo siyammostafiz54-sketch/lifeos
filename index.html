@@ -1,0 +1,1271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LifeOS • Daily Planner</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+  <style>
+    /* ============================================================
+       THEME VARIABLES (Dark / Light)
+       ============================================================ */
+    :root {
+      /* Light mode defaults */
+      --bg-page: #f4f7fb;
+      --bg-sidebar: #ffffff;
+      --bg-card: #ffffff;
+      --bg-input: #f8fafc;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --text-muted: #94a3b8;
+      --border-color: #e2e8f0;
+      --shadow: 0 20px 60px rgba(0,0,0,0.08);
+      --hover-bg: #f1f5f9;
+      --accent: #2563eb;
+      --accent-hover: #1d4ed8;
+      --danger: #dc2626;
+      --success: #16a34a;
+      --radius: 16px;
+      --radius-sm: 10px;
+      --transition: 0.2s ease;
+    }
+
+    /* Dark mode overrides */
+    body.dark {
+      --bg-page: #0f172a;
+      --bg-sidebar: #1e293b;
+      --bg-card: #1e293b;
+      --bg-input: #2d3a4f;
+      --text-primary: #f1f5f9;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+      --border-color: #334155;
+      --shadow: 0 20px 60px rgba(0,0,0,0.4);
+      --hover-bg: #2d3a4f;
+      --accent: #3b82f6;
+      --accent-hover: #2563eb;
+    }
+
+    /* ============================================================
+       RESET & BASE
+       ============================================================ */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: var(--bg-page);
+      color: var(--text-primary);
+      display: flex;
+      min-height: 100vh;
+      transition: background var(--transition), color var(--transition);
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: 250px;
+      background: var(--bg-sidebar);
+      border-right: 1px solid var(--border-color);
+      padding: 24px 16px;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      position: sticky;
+      top: 0;
+      overflow-y: auto;
+      flex-shrink: 0;
+      transition: background var(--transition), border var(--transition);
+    }
+    .sidebar-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid var(--border-color);
+      margin-bottom: 20px;
+    }
+    .sidebar-brand i {
+      font-size: 28px;
+      color: var(--accent);
+    }
+    .sidebar-brand h1 {
+      font-size: 24px;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--accent), #7c3aed);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .nav-items {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      flex: 1;
+    }
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 12px 16px;
+      border-radius: var(--radius-sm);
+      color: var(--text-secondary);
+      font-weight: 500;
+      font-size: 15px;
+      cursor: pointer;
+      transition: var(--transition);
+      border: none;
+      background: transparent;
+      width: 100%;
+      text-align: left;
+    }
+    .nav-item i {
+      width: 24px;
+      font-size: 16px;
+    }
+    .nav-item:hover {
+      background: var(--hover-bg);
+      color: var(--text-primary);
+    }
+    .nav-item.active {
+      background: var(--accent);
+      color: #fff;
+    }
+    .nav-item.active i {
+      color: #fff;
+    }
+
+    /* Main content */
+    .main-content {
+      flex: 1;
+      padding: 28px 36px 60px;
+      max-height: 100vh;
+      overflow-y: auto;
+      transition: background var(--transition);
+    }
+
+    /* Sections */
+    .page {
+      display: none;
+      animation: fadeIn 0.25s ease;
+    }
+    .page.active {
+      display: block;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 28px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .page-header h2 {
+      font-size: 26px;
+      font-weight: 700;
+    }
+    .page-header .date-badge {
+      background: var(--bg-card);
+      padding: 8px 18px;
+      border-radius: 30px;
+      font-size: 14px;
+      color: var(--text-secondary);
+      border: 1px solid var(--border-color);
+    }
+
+    /* Cards */
+    .card {
+      background: var(--bg-card);
+      border-radius: var(--radius);
+      padding: 20px 24px;
+      border: 1px solid var(--border-color);
+      box-shadow: var(--shadow);
+      transition: background var(--transition), border var(--transition), box-shadow var(--transition);
+      margin-bottom: 20px;
+    }
+    .card-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .card-title i {
+      color: var(--accent);
+    }
+
+    /* Grids */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    .grid-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 20px;
+    }
+
+    /* Forms */
+    .input-group {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+    .input-group input,
+    .input-group select,
+    .input-group textarea {
+      flex: 1 1 160px;
+      padding: 10px 14px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-color);
+      background: var(--bg-input);
+      color: var(--text-primary);
+      font-size: 14px;
+      outline: none;
+      transition: var(--transition);
+    }
+    .input-group input:focus,
+    .input-group select:focus,
+    .input-group textarea:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(37,99,235,0.15);
+    }
+    .btn {
+      padding: 10px 20px;
+      border-radius: var(--radius-sm);
+      border: none;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+      background: var(--accent);
+      color: #fff;
+      font-size: 14px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn:hover {
+      background: var(--accent-hover);
+      transform: scale(0.97);
+    }
+    .btn-danger {
+      background: var(--danger);
+    }
+    .btn-danger:hover {
+      background: #b91c1c;
+    }
+    .btn-sm {
+      padding: 6px 14px;
+      font-size: 12px;
+    }
+
+    /* Task / Item rows */
+    .task-item, .finance-item, .note-item, .habit-item {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 12px 16px;
+      background: var(--bg-input);
+      border-radius: var(--radius-sm);
+      margin-bottom: 8px;
+      border-left: 4px solid var(--accent);
+      transition: var(--transition);
+      flex-wrap: wrap;
+    }
+    .task-item:hover, .finance-item:hover, .note-item:hover, .habit-item:hover {
+      background: var(--hover-bg);
+    }
+    .task-item .task-text, .note-item .note-title, .habit-item .habit-name {
+      flex: 1;
+      font-size: 15px;
+    }
+    .task-item .task-text.done, .habit-item .habit-text.done {
+      text-decoration: line-through;
+      color: var(--text-muted);
+    }
+    .task-item .task-category {
+      font-size: 12px;
+      font-weight: 600;
+      padding: 2px 12px;
+      border-radius: 40px;
+      background: var(--border-color);
+      color: var(--text-secondary);
+    }
+    .task-item .task-category.study   { background: #dbeafe; color: #1e40af; }
+    .task-item .task-category.work    { background: #d1fae5; color: #065f46; }
+    .task-item .task-category.personal{ background: #fce7f3; color: #9d174d; }
+    .task-item .task-category.other   { background: #f1f5f9; color: #475569; }
+    body.dark .task-item .task-category.study   { background: #1e3a5f; color: #93c5fd; }
+    body.dark .task-item .task-category.work    { background: #1e4a3a; color: #6ee7b7; }
+    body.dark .task-item .task-category.personal{ background: #4a1e3a; color: #f9a8d4; }
+    body.dark .task-item .task-category.other   { background: #334155; color: #cbd5e1; }
+
+    .task-actions, .finance-actions, .note-actions, .habit-actions {
+      display: flex;
+      gap: 6px;
+    }
+    .task-actions button, .finance-actions button, .note-actions button, .habit-actions button {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 15px;
+      padding: 4px 8px;
+      border-radius: 6px;
+      transition: var(--transition);
+      color: var(--text-secondary);
+    }
+    .task-actions button:hover, .finance-actions button:hover, .note-actions button:hover, .habit-actions button:hover {
+      background: var(--hover-bg);
+    }
+    .task-actions .edit-btn:hover { color: var(--accent); }
+    .task-actions .delete-btn:hover, .habit-actions .delete-btn:hover { color: var(--danger); }
+
+    .task-check, .habit-check {
+      width: 20px;
+      height: 20px;
+      accent-color: var(--accent);
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    /* Finance summary */
+    .finance-summary {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .stat-box {
+      background: var(--bg-input);
+      padding: 12px 20px;
+      border-radius: var(--radius-sm);
+      flex: 1;
+      min-width: 120px;
+      text-align: center;
+    }
+    .stat-box .label {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+    .stat-box .value {
+      font-size: 24px;
+      font-weight: 700;
+      margin-top: 4px;
+    }
+    .stat-box .value.positive { color: var(--success); }
+    .stat-box .value.negative { color: var(--danger); }
+
+    /* Habit details */
+    .habit-details {
+      font-size: 13px;
+      color: var(--text-secondary);
+      flex-basis: 100%;
+      margin-top: 2px;
+      padding-left: 30px;
+    }
+
+    /* Modal (edit) */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.4);
+      backdrop-filter: blur(4px);
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+    .modal-overlay.active {
+      display: flex;
+    }
+    .modal-box {
+      background: var(--bg-card);
+      max-width: 440px;
+      width: 90%;
+      padding: 28px;
+      border-radius: var(--radius);
+      box-shadow: 0 30px 60px rgba(0,0,0,0.3);
+      animation: modalIn 0.2s ease;
+    }
+    @keyframes modalIn {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    .modal-box h3 {
+      margin-bottom: 16px;
+    }
+    .modal-box label {
+      display: block;
+      font-weight: 500;
+      margin-top: 12px;
+      color: var(--text-secondary);
+    }
+    .modal-box input, .modal-box select, .modal-box textarea {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      background: var(--bg-input);
+      color: var(--text-primary);
+      margin-top: 4px;
+    }
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      margin-top: 20px;
+    }
+    .modal-actions .btn-cancel {
+      background: var(--border-color);
+      color: var(--text-primary);
+    }
+    .modal-actions .btn-cancel:hover {
+      background: var(--text-muted);
+    }
+
+    /* Theme toggle in settings */
+    .theme-toggle {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin: 12px 0;
+    }
+    .theme-toggle .toggle-track {
+      width: 56px;
+      height: 30px;
+      background: var(--text-muted);
+      border-radius: 30px;
+      cursor: pointer;
+      position: relative;
+      transition: var(--transition);
+    }
+    .theme-toggle .toggle-track.active {
+      background: var(--accent);
+    }
+    .theme-toggle .toggle-track::after {
+      content: '';
+      position: absolute;
+      width: 22px;
+      height: 22px;
+      background: #fff;
+      border-radius: 50%;
+      top: 4px;
+      left: 4px;
+      transition: var(--transition);
+    }
+    .theme-toggle .toggle-track.active::after {
+      left: 30px;
+    }
+
+    /* Empty state */
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text-muted);
+    }
+    .empty-state i {
+      font-size: 40px;
+      display: block;
+      margin-bottom: 12px;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .sidebar {
+        width: 200px;
+        padding: 16px 12px;
+      }
+      .main-content {
+        padding: 16px 18px;
+      }
+      .grid-2, .grid-3 {
+        grid-template-columns: 1fr;
+      }
+      .page-header h2 {
+        font-size: 20px;
+      }
+      .input-group input, .input-group select {
+        flex: 1 1 100%;
+      }
+      .task-item, .finance-item, .note-item, .habit-item {
+        flex-wrap: wrap;
+      }
+      .task-item .task-text, .habit-item .habit-name {
+        flex-basis: 100%;
+        order: 2;
+        margin-top: 4px;
+      }
+      .task-item .task-check, .habit-item .habit-check {
+        order: 1;
+      }
+      .task-item .task-category {
+        order: 3;
+      }
+      .task-item .task-actions, .habit-item .habit-actions {
+        order: 4;
+        margin-left: auto;
+      }
+      .habit-details {
+        padding-left: 0;
+      }
+    }
+    @media (max-width: 480px) {
+      .sidebar {
+        width: 60px;
+        padding: 12px 8px;
+      }
+      .sidebar-brand h1, .sidebar-brand span, .nav-item span {
+        display: none;
+      }
+      .sidebar-brand i {
+        font-size: 24px;
+      }
+      .nav-item {
+        justify-content: center;
+        padding: 12px 0;
+      }
+      .nav-item i {
+        margin: 0;
+      }
+      .main-content {
+        padding: 12px 14px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ============================================================
+     SIDEBAR
+     ============================================================ -->
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-brand">
+    <i class="fas fa-crown"></i>
+    <h1>LifeOS</h1>
+  </div>
+  <div class="nav-items">
+    <button class="nav-item active" data-page="dashboard"><i class="fas fa-th-large"></i><span>Dashboard</span></button>
+    <button class="nav-item" data-page="tasks"><i class="fas fa-tasks"></i><span>Tasks</span></button>
+    <button class="nav-item" data-page="study"><i class="fas fa-graduation-cap"></i><span>Study</span></button>
+    <button class="nav-item" data-page="finance"><i class="fas fa-wallet"></i><span>Finance</span></button>
+    <button class="nav-item" data-page="habits"><i class="fas fa-check-double"></i><span>Habits</span></button>
+    <button class="nav-item" data-page="notes"><i class="fas fa-sticky-note"></i><span>Notes</span></button>
+    <button class="nav-item" data-page="settings"><i class="fas fa-sliders-h"></i><span>Settings</span></button>
+  </div>
+</nav>
+
+<!-- ============================================================
+     MAIN CONTENT
+     ============================================================ -->
+<main class="main-content">
+  <!-- ===== DASHBOARD ===== -->
+  <div class="page active" id="page-dashboard">
+    <div class="page-header">
+      <h2>📊 Dashboard</h2>
+      <span class="date-badge" id="dashDate"></span>
+    </div>
+    <div class="grid-3" style="margin-bottom:20px;">
+      <div class="card"><div class="card-title"><i class="fas fa-tasks"></i> Tasks</div><div id="dashTasksCount">0</div></div>
+      <div class="card"><div class="card-title"><i class="fas fa-graduation-cap"></i> Study</div><div id="dashStudyCount">0</div></div>
+      <div class="card"><div class="card-title"><i class="fas fa-coins"></i> Balance</div><div id="dashBalance">0</div></div>
+    </div>
+    <div class="grid-2">
+      <div class="card"><div class="card-title"><i class="fas fa-clock"></i> Recent Tasks</div><div id="dashRecentTasks">Nothing yet</div></div>
+      <div class="card"><div class="card-title"><i class="fas fa-chart-line"></i> Finance Snapshot</div><div id="dashFinanceSnapshot">No transactions</div></div>
+    </div>
+  </div>
+
+  <!-- ===== TASKS ===== -->
+  <div class="page" id="page-tasks">
+    <div class="page-header"><h2>📋 Tasks</h2></div>
+    <div class="card">
+      <div class="card-title"><i class="fas fa-plus-circle"></i> Add New Task</div>
+      <div class="input-group">
+        <input type="text" id="taskInput" placeholder="What to do?" />
+        <select id="taskCategory">
+          <option value="Work">💼 Work</option>
+          <option value="Personal">🧘 Personal</option>
+          <option value="Other">📌 Other</option>
+        </select>
+        <button class="btn" id="addTaskBtn"><i class="fas fa-plus"></i> Add</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title"><i class="fas fa-list"></i> All Tasks</div>
+      <div id="taskList"><div class="empty-state">No tasks yet. Add one above!</div></div>
+    </div>
+  </div>
+
+  <!-- ===== STUDY ===== -->
+  <div class="page" id="page-study">
+    <div class="page-header"><h2>📖 Study</h2></div>
+    <div class="card">
+      <div class="card-title"><i class="fas fa-plus-circle"></i> New Study Task</div>
+      <div class="input-group">
+        <input type="text" id="studyInput" placeholder="Study task..." />
+        <button class="btn" id="addStudyBtn"><i class="fas fa-plus"></i> Add</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title"><i class="fas fa-list"></i> Study Tasks</div>
+      <div id="studyList"><div class="empty-state">No study tasks yet. Start learning!</div></div>
+    </div>
+  </div>
+
+  <!-- ===== FINANCE ===== -->
+  <div class="page" id="page-finance">
+    <div class="page-header"><h2>💰 Finance</h2></div>
+    <div class="card">
+      <div class="card-title"><i class="fas fa-plus-circle"></i> Add Transaction</div>
+      <div class="input-group">
+        <input type="text" id="financeDesc" placeholder="Description" />
+        <input type="number" id="financeAmount" placeholder="Amount" />
+        <select id="financeType">
+          <option value="income">Income</option>
+          <option value="expense">Expense</option>
+        </select>
+        <button class="btn" id="addFinanceBtn"><i class="fas fa-plus"></i> Add</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title"><i class="fas fa-chart-pie"></i> Summary</div>
+      <div id="financeSummary"><div class="finance-summary"><div class="stat-box"><div class="label">Total Income</div><div class="value positive">0</div></div><div class="stat-box"><div class="label">Total Expenses</div><div class="value negative">0</div></div><div class="stat-box"><div class="label">Balance</div><div class="value" style="color:var(--accent)">0</div></div></div></div>
+    </div>
+    <div class="card">
+      <div class="card-title"><i class="fas fa-history"></i> Transactions</div>
+      <div id="financeList"><div class="empty-state">No transactions yet.</div></div>
+    </div>
+  </div>
+
+  <!-- ===== HABITS ===== -->
+  <div class="page" id="page-habits">
+    <div class="page-header"><h2>✅ Habits</h2></div>
+    <div class="card">
+      <div class="card-title"><i class="fas fa-plus-circle"></i> Add New Habit</div>
+      <div class="input-group">
+        <input type="text" id="habitName" placeholder="Habit name" />
+        <input type="text" id="habitDetails" placeholder="Details (optional)" />
+        <button class="btn" id="addHabitBtn"><i class="fas fa-plus"></i> Add</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title"><i class="fas fa-list"></i> Your Habits</div>
+      <div id="habitList"><div class="empty-state">No habits yet. Add one above!</div></div>
+    </div>
+  </div>
+
+  <!-- ===== NOTES ===== -->
+  <div class="page" id="page-notes">
+    <div class="page-header"><h2>📝 Notes</h2></div>
+    <div class="card">
+      <div class="card-title"><i class="fas fa-plus-circle"></i> New Note</div>
+      <div class="input-group">
+        <input type="text" id="noteTitle" placeholder="Title" />
+        <button class="btn" id="addNoteBtn"><i class="fas fa-plus"></i> Add</button>
+      </div>
+      <textarea id="noteContent" style="width:100%;margin-top:10px;padding:12px;border-radius:var(--radius-sm);background:var(--bg-input);border:1px solid var(--border-color);color:var(--text-primary);min-height:80px;resize:vertical;" placeholder="Write your note..."></textarea>
+    </div>
+    <div class="card">
+      <div class="card-title"><i class="fas fa-sticky-note"></i> All Notes</div>
+      <div id="noteList"><div class="empty-state">No notes saved yet.</div></div>
+    </div>
+  </div>
+
+  <!-- ===== SETTINGS ===== -->
+  <div class="page" id="page-settings">
+    <div class="page-header"><h2>⚙️ Settings</h2></div>
+    <div class="card">
+      <div class="card-title"><i class="fas fa-palette"></i> Theme</div>
+      <div class="theme-toggle">
+        <span><i class="fas fa-sun"></i> Light</span>
+        <div class="toggle-track" id="themeToggle"></div>
+        <span><i class="fas fa-moon"></i> Dark</span>
+      </div>
+      <p style="margin-top:12px;color:var(--text-secondary);">Switch between light and dark mode.</p>
+    </div>
+    <div class="card">
+      <div class="card-title"><i class="fas fa-database"></i> Data Management</div>
+      <p style="color:var(--text-secondary);">All your data is stored locally in your browser. You can reset everything below.</p>
+      <button class="btn btn-danger" id="resetDataBtn" style="margin-top:12px;"><i class="fas fa-trash"></i> Reset All Data</button>
+    </div>
+  </div>
+</main>
+
+<!-- ============================================================
+     EDIT MODAL (shared for tasks & study)
+     ============================================================ -->
+<div class="modal-overlay" id="editModal">
+  <div class="modal-box">
+    <h3 id="editModalTitle">Edit Item</h3>
+    <label for="editInput">Text</label>
+    <input type="text" id="editInput" />
+    <label for="editCategory" id="editCategoryLabel">Category</label>
+    <select id="editCategory">
+      <option value="Work">Work</option>
+      <option value="Personal">Personal</option>
+      <option value="Other">Other</option>
+    </select>
+    <div class="modal-actions">
+      <button class="btn-cancel" id="editCancelBtn">Cancel</button>
+      <button class="btn" id="editSaveBtn">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ============================================================
+  //  DATA LAYER
+  // ============================================================
+  let tasks = [];
+  let studyTasks = [];
+  let finances = [];
+  let habits = [];   // array of { id, name, details, done }
+  let notes = [];
+  let editingId = null;
+  let editingType = null; // 'task' or 'study'
+
+  // ----- Load from localStorage -----
+  function loadData() {
+    const stored = localStorage.getItem('lifeos_data');
+    if (stored) {
+      try {
+        const data = JSON.parse(stored);
+        tasks = data.tasks || [];
+        studyTasks = data.studyTasks || [];
+        finances = data.finances || [];
+        habits = data.habits || [];
+        notes = data.notes || [];
+      } catch (e) {
+        resetToDefaults();
+      }
+    } else {
+      resetToDefaults();
+    }
+  }
+
+  function resetToDefaults() {
+    tasks = [];
+    studyTasks = [];
+    finances = [];
+    habits = [];
+    notes = [];
+    saveData();
+  }
+
+  function saveData() {
+    const data = { tasks, studyTasks, finances, habits, notes };
+    localStorage.setItem('lifeos_data', JSON.stringify(data));
+  }
+
+  // ============================================================
+  //  RENDER ENGINE
+  // ============================================================
+  function renderAll() {
+    renderTasks();
+    renderStudy();
+    renderFinance();
+    renderHabits();
+    renderNotes();
+    renderDashboard();
+    updateDate();
+  }
+
+  // ----- Dashboard -----
+  function renderDashboard() {
+    const totalTasks = tasks.length;
+    const totalStudy = studyTasks.length;
+    const totalIncome = finances.filter(f => f.type === 'income').reduce((sum, f) => sum + f.amount, 0);
+    const totalExpense = finances.filter(f => f.type === 'expense').reduce((sum, f) => sum + f.amount, 0);
+    const balance = totalIncome - totalExpense;
+
+    document.getElementById('dashTasksCount').textContent = totalTasks;
+    document.getElementById('dashStudyCount').textContent = totalStudy;
+    document.getElementById('dashBalance').textContent = balance + ' ৳';
+
+    // Recent tasks (last 3)
+    const recent = tasks.slice(-3).reverse();
+    if (recent.length) {
+      document.getElementById('dashRecentTasks').innerHTML = recent.map(t =>
+        `<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border-color);">
+          <span>${escapeHtml(t.text)}</span>
+          <span style="font-size:12px;color:var(--text-muted);">${t.done ? '✅' : '⏳'}</span>
+        </div>`
+      ).join('');
+    } else {
+      document.getElementById('dashRecentTasks').innerHTML = '<div class="empty-state">No tasks yet.</div>';
+    }
+
+    // Finance snapshot
+    document.getElementById('dashFinanceSnapshot').innerHTML = `
+      <div class="finance-summary">
+        <div class="stat-box"><div class="label">Income</div><div class="value positive">${totalIncome} ৳</div></div>
+        <div class="stat-box"><div class="label">Expenses</div><div class="value negative">${totalExpense} ৳</div></div>
+        <div class="stat-box"><div class="label">Balance</div><div class="value" style="color:var(--accent)">${balance} ৳</div></div>
+      </div>
+    `;
+  }
+
+  function updateDate() {
+    const now = new Date();
+    const opts = { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' };
+    document.getElementById('dashDate').textContent = now.toLocaleDateString('en-US', opts);
+  }
+
+  // ----- Tasks -----
+  function renderTasks() {
+    const container = document.getElementById('taskList');
+    if (!tasks.length) {
+      container.innerHTML = '<div class="empty-state">📭 No tasks yet. Add one above!</div>';
+      return;
+    }
+    container.innerHTML = tasks.map((task, idx) => {
+      const doneClass = task.done ? 'done' : '';
+      const catClass = task.category.toLowerCase();
+      return `
+        <div class="task-item" data-idx="${idx}">
+          <input type="checkbox" class="task-check" ${task.done ? 'checked' : ''} />
+          <span class="task-text ${doneClass}">${escapeHtml(task.text)}</span>
+          <span class="task-category ${catClass}">${escapeHtml(task.category)}</span>
+          <div class="task-actions">
+            <button class="edit-btn" data-idx="${idx}" data-type="task"><i class="fas fa-pen"></i></button>
+            <button class="delete-btn" data-idx="${idx}" data-type="task"><i class="fas fa-trash"></i></button>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    // Attach events
+    container.querySelectorAll('.task-item').forEach(item => {
+      const idx = parseInt(item.dataset.idx);
+      const check = item.querySelector('.task-check');
+      const editBtn = item.querySelector('.edit-btn');
+      const delBtn = item.querySelector('.delete-btn');
+
+      check.addEventListener('change', () => {
+        tasks[idx].done = check.checked;
+        saveData();
+        renderTasks();
+        renderDashboard();
+      });
+
+      editBtn.addEventListener('click', () => {
+        openEditModal('task', idx);
+      });
+
+      delBtn.addEventListener('click', () => {
+        if (confirm('Delete this task?')) {
+          tasks.splice(idx, 1);
+          saveData();
+          renderTasks();
+          renderDashboard();
+        }
+      });
+    });
+  }
+
+  // ----- Study -----
+  function renderStudy() {
+    const container = document.getElementById('studyList');
+    if (!studyTasks.length) {
+      container.innerHTML = '<div class="empty-state">📖 No study tasks. Start learning!</div>';
+      return;
+    }
+    container.innerHTML = studyTasks.map((task, idx) => {
+      const doneClass = task.done ? 'done' : '';
+      return `
+        <div class="task-item" data-idx="${idx}">
+          <input type="checkbox" class="task-check" ${task.done ? 'checked' : ''} />
+          <span class="task-text ${doneClass}">${escapeHtml(task.text)}</span>
+          <span class="task-category study">Study</span>
+          <div class="task-actions">
+            <button class="edit-btn" data-idx="${idx}" data-type="study"><i class="fas fa-pen"></i></button>
+            <button class="delete-btn" data-idx="${idx}" data-type="study"><i class="fas fa-trash"></i></button>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    container.querySelectorAll('.task-item').forEach(item => {
+      const idx = parseInt(item.dataset.idx);
+      const check = item.querySelector('.task-check');
+      const editBtn = item.querySelector('.edit-btn');
+      const delBtn = item.querySelector('.delete-btn');
+
+      check.addEventListener('change', () => {
+        studyTasks[idx].done = check.checked;
+        saveData();
+        renderStudy();
+        renderDashboard();
+      });
+
+      editBtn.addEventListener('click', () => {
+        openEditModal('study', idx);
+      });
+
+      delBtn.addEventListener('click', () => {
+        if (confirm('Delete this study task?')) {
+          studyTasks.splice(idx, 1);
+          saveData();
+          renderStudy();
+          renderDashboard();
+        }
+      });
+    });
+  }
+
+  // ----- Finance -----
+  function renderFinance() {
+    const totalIncome = finances.filter(f => f.type === 'income').reduce((s, f) => s + f.amount, 0);
+    const totalExpense = finances.filter(f => f.type === 'expense').reduce((s, f) => s + f.amount, 0);
+    const balance = totalIncome - totalExpense;
+
+    document.getElementById('financeSummary').innerHTML = `
+      <div class="finance-summary">
+        <div class="stat-box"><div class="label">Total Income</div><div class="value positive">${totalIncome} ৳</div></div>
+        <div class="stat-box"><div class="label">Total Expenses</div><div class="value negative">${totalExpense} ৳</div></div>
+        <div class="stat-box"><div class="label">Balance</div><div class="value" style="color:var(--accent)">${balance} ৳</div></div>
+      </div>
+    `;
+
+    const list = document.getElementById('financeList');
+    if (!finances.length) {
+      list.innerHTML = '<div class="empty-state">No transactions yet.</div>';
+      return;
+    }
+    list.innerHTML = finances.slice().reverse().map((item, idx) => {
+      const realIdx = finances.length - 1 - idx;
+      return `
+        <div class="finance-item" data-idx="${realIdx}">
+          <span style="flex:1;">${escapeHtml(item.description)}</span>
+          <span style="font-weight:600;color:${item.type === 'income' ? 'var(--success)' : 'var(--danger)'}">
+            ${item.type === 'income' ? '+' : '-'} ${item.amount} ৳
+          </span>
+          <div class="finance-actions">
+            <button class="delete-finance" data-idx="${realIdx}"><i class="fas fa-trash"></i></button>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    list.querySelectorAll('.delete-finance').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const idx = parseInt(btn.dataset.idx);
+        if (confirm('Delete this transaction?')) {
+          finances.splice(idx, 1);
+          saveData();
+          renderFinance();
+          renderDashboard();
+        }
+      });
+    });
+  }
+
+  // ----- Habits (new) -----
+  function renderHabits() {
+    const container = document.getElementById('habitList');
+    if (!habits.length) {
+      container.innerHTML = '<div class="empty-state">No habits yet. Add one above!</div>';
+      return;
+    }
+    container.innerHTML = habits.map((habit, idx) => {
+      const doneClass = habit.done ? 'done' : '';
+      return `
+        <div class="habit-item" data-idx="${idx}">
+          <input type="checkbox" class="habit-check" ${habit.done ? 'checked' : ''} />
+          <span class="habit-name ${doneClass}">${escapeHtml(habit.name)}</span>
+          ${habit.details ? `<div class="habit-details">${escapeHtml(habit.details)}</div>` : ''}
+          <div class="habit-actions">
+            <button class="delete-habit" data-idx="${idx}"><i class="fas fa-trash"></i></button>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    container.querySelectorAll('.habit-item').forEach(item => {
+      const idx = parseInt(item.dataset.idx);
+      const check = item.querySelector('.habit-check');
+      const delBtn = item.querySelector('.delete-habit');
+
+      check.addEventListener('change', () => {
+        habits[idx].done = check.checked;
+        saveData();
+        renderHabits();
+        // Dashboard doesn't show habits count, but we can re-render all if needed
+      });
+
+      delBtn.addEventListener('click', () => {
+        if (confirm('Delete this habit?')) {
+          habits.splice(idx, 1);
+          saveData();
+          renderHabits();
+        }
+      });
+    });
+  }
+
+  // ----- Notes -----
+  function renderNotes() {
+    const container = document.getElementById('noteList');
+    if (!notes.length) {
+      container.innerHTML = '<div class="empty-state">No notes yet.</div>';
+      return;
+    }
+    container.innerHTML = notes.slice().reverse().map((note, idx) => {
+      const realIdx = notes.length - 1 - idx;
+      return `
+        <div class="note-item" data-idx="${realIdx}">
+          <div class="note-title" style="flex:1;font-weight:600;">${escapeHtml(note.title)}</div>
+          <div style="flex:2;color:var(--text-secondary);font-size:14px;">${escapeHtml(note.content)}</div>
+          <div class="note-actions">
+            <button class="delete-note" data-idx="${realIdx}"><i class="fas fa-trash"></i></button>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    container.querySelectorAll('.delete-note').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const idx = parseInt(btn.dataset.idx);
+        if (confirm('Delete this note?')) {
+          notes.splice(idx, 1);
+          saveData();
+          renderNotes();
+        }
+      });
+    });
+  }
+
+  // ============================================================
+  //  ADD FUNCTIONS
+  // ============================================================
+  function addTask() {
+    const input = document.getElementById('taskInput');
+    const cat = document.getElementById('taskCategory').value;
+    const text = input.value.trim();
+    if (!text) return alert('Please enter a task.');
+    tasks.push({ text, category: cat, done: false });
+    input.value = '';
+    saveData();
+    renderTasks();
+    renderDashboard();
+  }
+
+  function addStudy() {
+    const input = document.getElementById('studyInput');
+    const text = input.value.trim();
+    if (!text) return alert('Please enter a study task.');
+    studyTasks.push({ text, done: false });
+    input.value = '';
+    saveData();
+    renderStudy();
+    renderDashboard();
+  }
+
+  function addFinance() {
+    const desc = document.getElementById('financeDesc');
+    const amount = document.getElementById('financeAmount');
+    const type = document.getElementById('financeType').value;
+    if (!desc.value.trim() || !amount.value) return alert('Please fill all fields.');
+    finances.push({
+      description: desc.value.trim(),
+      amount: parseFloat(amount.value),
+      type: type,
+    });
+    desc.value = '';
+    amount.value = '';
+    saveData();
+    renderFinance();
+    renderDashboard();
+  }
+
+  function addHabit() {
+    const nameInput = document.getElementById('habitName');
+    const detailsInput = document.getElementById('habitDetails');
+    const name = nameInput.value.trim();
+    if (!name) return alert('Please enter a habit name.');
+    habits.push({
+      id: Date.now(),
+      name: name,
+      details: detailsInput.value.trim() || '',
+      done: false
+    });
+    nameInput.value = '';
+    detailsInput.value = '';
+    saveData();
+    renderHabits();
+  }
+
+  function addNote() {
+    const title = document.getElementById('noteTitle');
+    const content = document.getElementById('noteContent');
+    if (!title.value.trim() || !content.value.trim()) return alert('Please fill both title and content.');
+    notes.push({ title: title.value.trim(), content: content.value.trim() });
+    title.value = '';
+    content.value = '';
+    saveData();
+    renderNotes();
+  }
+
+  // ============================================================
+  //  EDIT MODAL (shared)
+  // ============================================================
+  function openEditModal(type, idx) {
+    editingType = type;
+    editingId = idx;
+    const modal = document.getElementById('editModal');
+    const title = document.getElementById('editModalTitle');
+    const input = document.getElementById('editInput');
+    const catSelect = document.getElementById('editCategory');
+    const catLabel = document.getElementById('editCategoryLabel');
+
+    if (type === 'task') {
+      const task = tasks[idx];
+      title.textContent = 'Edit Task';
+      input.value = task.text;
+      catSelect.value = task.category;
+      catSelect.style.display = 'block';
+      catLabel.style.display = 'block';
+    } else if (type === 'study') {
+      const task = studyTasks[idx];
+      title.textContent = 'Edit Study Task';
+      input.value = task.text;
+      catSelect.style.display = 'none';
+      catLabel.style.display = 'none';
+    }
+    modal.classList.add('active');
+  }
+
+  function closeEditModal() {
+    document.getElementById('editModal').classList.remove('active');
+    editingId = null;
+    editingType = null;
+  }
+
+  function saveEdit() {
+    const input = document.getElementById('editInput');
+    const newText = input.value.trim();
+    if (!newText) return alert('Text cannot be empty.');
+
+    if (editingType === 'task') {
+      const cat = document.getElementById('editCategory').value;
+      tasks[editingId].text = newText;
+      tasks[editingId].category = cat;
+    } else if (editingType === 'study') {
+      studyTasks[editingId].text = newText;
+    }
+    saveData();
+    closeEditModal();
+    renderAll();
+  }
+
+  // ============================================================
+  //  THEME TOGGLE
+  // ============================================================
+  function setTheme(theme) {
+    if (theme === 'dark') {
+      document.body.classList.add('dark');
+      document.getElementById('themeToggle').classList.add('active');
+    } else {
+      document.body.classList.remove('dark');
+      document.getElementById('themeToggle').classList.remove('active');
+    }
+    localStorage.setItem('lifeos_theme', theme);
+  }
+
+  function toggleTheme() {
+    const current = document.body.classList.contains('dark') ? 'dark' : 'light';
+    setTheme(current === 'dark' ? 'light' : 'dark');
+  }
+
+  function loadTheme() {
+    const saved = localStorage.getItem('lifeos_theme');
+    if (saved) {
+      setTheme(saved);
+    } else {
+      // Default to light
+      setTheme('light');
+    }
+  }
+
+  // ============================================================
+  //  NAVIGATION
+  // ============================================================
+  const navItems = document.querySelectorAll('.nav-item');
+  const pages = document.querySelectorAll('.page');
+
+  navItems.forEach(item => {
+    item.addEventListener('click', () => {
+      const pageId = item.dataset.page;
+      navItems.forEach(n => n.classList.remove('active'));
+      item.classList.add('active');
+      pages.forEach(p => p.classList.remove('active'));
+      const target = document.getElementById(`page-${pageId}`);
+      if (target) target.classList.add('active');
+    });
+  });
+
+  // ============================================================
+  //  UTILITY
+  // ============================================================
+  function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  // ============================================================
+  //  EVENT BINDINGS
+  // ============================================================
+  document.addEventListener('DOMContentLoaded', () => {
+    loadData();
+    loadTheme();
+    renderAll();
+
+    // Add buttons
+    document.getElementById('addTaskBtn').addEventListener('click', addTask);
+    document.getElementById('addStudyBtn').addEventListener('click', addStudy);
+    document.getElementById('addFinanceBtn').addEventListener('click', addFinance);
+    document.getElementById('addHabitBtn').addEventListener('click', addHabit);
+    document.getElementById('addNoteBtn').addEventListener('click', addNote);
+
+    // Enter keys
+    document.getElementById('taskInput').addEventListener('keypress', e => { if (e.key === 'Enter') addTask(); });
+    document.getElementById('studyInput').addEventListener('keypress', e => { if (e.key === 'Enter') addStudy(); });
+    document.getElementById('financeAmount').addEventListener('keypress', e => { if (e.key === 'Enter') addFinance(); });
+    document.getElementById('habitName').addEventListener('keypress', e => { if (e.key === 'Enter') addHabit(); });
+
+    // Modal controls
+    document.getElementById('editCancelBtn').addEventListener('click', closeEditModal);
+    document.getElementById('editSaveBtn').addEventListener('click', saveEdit);
+    document.getElementById('editModal').addEventListener('click', (e) => {
+      if (e.target === document.getElementById('editModal')) closeEditModal();
+    });
+    document.getElementById('editInput').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') saveEdit();
+    });
+
+    // Theme toggle
+    document.getElementById('themeToggle').addEventListener('click', toggleTheme);
+
+    // Reset data
+    document.getElementById('resetDataBtn').addEventListener('click', () => {
+      if (confirm('Are you sure you want to delete ALL data? This cannot be undone.')) {
+        resetToDefaults();
+        renderAll();
+        alert('All data has been reset.');
+      }
+    });
+  });
+</script>
+</body>
+</html>
